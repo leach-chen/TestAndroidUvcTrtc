@@ -3,6 +3,7 @@ package com.leachchen.testandroiduvctrtc;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
@@ -14,8 +15,13 @@ import com.leachchen.testandroiduvctrtc.widget.CameraViewInterface;
 import com.leachchen.testandroiduvctrtc.widget.UVCCameraTextureView;
 import com.serenegiant.common.BaseActivity;
 import com.serenegiant.usb.CameraDialog;
+import com.serenegiant.usb.DeviceFilter;
+import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
+
+import java.nio.ByteBuffer;
+import java.util.List;
 
 public class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
 
@@ -61,6 +67,24 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
         mHandlerR = UVCCameraHandler.createHandler(this, mUVCCameraViewR, UVCCamera.DEFAULT_PREVIEW_WIDTH, UVCCamera.DEFAULT_PREVIEW_HEIGHT, BANDWIDTH_FACTORS[1]);
 
         mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
+
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                final List<DeviceFilter> filter = DeviceFilter.getDeviceFilters(MainActivity.this, R.xml.device_filter);
+                List<UsbDevice> devices = mUSBMonitor.getDeviceList(filter.get(0));
+                mUSBMonitor.requestPermission((UsbDevice)devices.get(0));
+
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUSBMonitor.requestPermission((UsbDevice)devices.get(2));
+                    }
+                },2000);
+
+            }
+        },1000);
     }
 
     @Override
@@ -178,6 +202,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
                 mHandlerL.open(ctrlBlock);
                 final SurfaceTexture st = mUVCCameraViewL.getSurfaceTexture();
                 mHandlerL.startPreview(new Surface(st));
+
+                /*final UVCCamera camera = new UVCCamera();
+                camera.open(ctrlBlock);
+                camera.setPreviewDisplay(new Surface(st));
+                camera.startPreview();
+                camera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_RGB565*//*UVCCamera.PIXEL_FORMAT_NV21*//*);*/
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -273,5 +304,12 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
             }
         }, 0);
     }
+
+    private final IFrameCallback mIFrameCallback = new IFrameCallback() {
+        @Override
+        public void onFrame(final ByteBuffer frame) {
+              //Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        }
+    };
 
 }
