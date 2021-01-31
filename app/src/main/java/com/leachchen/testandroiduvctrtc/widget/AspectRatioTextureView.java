@@ -21,43 +21,39 @@
  *  may have a different license, see the respective files.
  */
 
-package com.leachchen.testandroiduvctrtc;
+package com.leachchen.testandroiduvctrtc.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
-import com.leachchen.testandroiduvctrtc.widget.AspectRatioViewInterface;
+import com.serenegiant.widget.IAspectRatioView;
 
 /**
  * change the view size with keeping the specified aspect ratio.
  * if you set this view with in a FrameLayout and set property "android:layout_gravity="center",
  * you can show this view in the center of screen and keep the aspect ratio of content
- * XXX it is better that can set the aspect raton a a xml property
+ * XXX it is better that can set the aspect ratio as xml property
  */
-public class SimpleUVCCameraTextureView extends TextureView    // API >= 14
-	implements AspectRatioViewInterface {
+public class AspectRatioTextureView extends TextureView    // API >= 14
+	implements IAspectRatioView {
+
+	private static final boolean DEBUG = true;	// TODO set false on release
+	private static final String TAG = "AbstractCameraView";
 
     private double mRequestedAspect = -1.0;
+	private CameraViewInterface.Callback mCallback;
 
-	public SimpleUVCCameraTextureView(final Context context) {
+	public AspectRatioTextureView(final Context context) {
 		this(context, null, 0);
 	}
 
-	public SimpleUVCCameraTextureView(final Context context, final AttributeSet attrs) {
+	public AspectRatioTextureView(final Context context, final AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
-	public SimpleUVCCameraTextureView(final Context context, final AttributeSet attrs, final int defStyle) {
+	public AspectRatioTextureView(final Context context, final AttributeSet attrs, final int defStyle) {
 		super(context, attrs, defStyle);
-	}
-
-	@Override
-	public void onResume() {
-	}
-
-	@Override
-	public void onPause() {
 	}
 
 	@Override
@@ -70,6 +66,16 @@ public class SimpleUVCCameraTextureView extends TextureView    // API >= 14
             requestLayout();
         }
     }
+
+	@Override
+    public void setAspectRatio(final int width, final int height) {
+		setAspectRatio(width / (double)height);
+    }
+
+	@Override
+	public double getAspectRatio() {
+		return mRequestedAspect;
+	}
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -91,7 +97,7 @@ public class SimpleUVCCameraTextureView extends TextureView    // API >= 14
 					// width priority decision
 					initialHeight = (int) (initialWidth / mRequestedAspect);
 				} else {
-					// height priority decison
+					// height priority decision
 					initialWidth = (int) (initialHeight * mRequestedAspect);
 				}
 				initialWidth += horizPadding;

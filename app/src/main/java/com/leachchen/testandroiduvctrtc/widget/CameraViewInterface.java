@@ -21,10 +21,28 @@
  *  may have a different license, see the respective files.
  */
 
-package com.leachchen.testandroiduvctrtc;
+package com.leachchen.testandroiduvctrtc.widget;
 
-public interface AspectRatioViewInterface {
-    public void setAspectRatio(double aspectRatio);
-    public void onPause();
-    public void onResume();
+import android.graphics.Bitmap;
+import android.graphics.SurfaceTexture;
+import android.view.Surface;
+
+import com.leachchen.testandroiduvctrtc.encoder.IVideoEncoder;
+import com.serenegiant.widget.IAspectRatioView;
+
+
+public interface CameraViewInterface extends IAspectRatioView {
+	public interface Callback {
+		public void onSurfaceCreated(CameraViewInterface view, Surface surface);
+		public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height);
+		public void onSurfaceDestroy(CameraViewInterface view, Surface surface);
+	}
+	public void onPause();
+	public void onResume();
+	public void setCallback(Callback callback);
+	public SurfaceTexture getSurfaceTexture();
+	public Surface getSurface();
+	public boolean hasSurface();
+	public void setVideoEncoder(final IVideoEncoder encoder);
+	public Bitmap captureStillImage();
 }
