@@ -33,12 +33,12 @@ import com.leachchen.testandroiduvctrtc.widget.AspectRatioViewInterface;
  * change the view size with keeping the specified aspect ratio.
  * if you set this view with in a FrameLayout and set property "android:layout_gravity="center",
  * you can show this view in the center of screen and keep the aspect ratio of content
- * XXX it is better that can set the aspect raton a a xml property
+ * XXX it is better that can set the aspect ratio as a xml property
  */
-public class SimpleUVCCameraTextureView extends TextureView    // API >= 14
-	implements AspectRatioViewInterface {
+public class SimpleUVCCameraTextureView extends TextureView	// API >= 14
+		implements AspectRatioViewInterface {
 
-    private double mRequestedAspect = -1.0;
+	private double mRequestedAspect = -1.0;
 
 	public SimpleUVCCameraTextureView(final Context context) {
 		this(context, null, 0);
@@ -61,18 +61,18 @@ public class SimpleUVCCameraTextureView extends TextureView    // API >= 14
 	}
 
 	@Override
-    public void setAspectRatio(final double aspectRatio) {
-        if (aspectRatio < 0) {
-            throw new IllegalArgumentException();
-        }
-        if (mRequestedAspect != aspectRatio) {
-            mRequestedAspect = aspectRatio;
-            requestLayout();
-        }
-    }
+	public void setAspectRatio(final double aspectRatio) {
+		if (aspectRatio < 0) {
+			throw new IllegalArgumentException();
+		}
+		if (mRequestedAspect != aspectRatio) {
+			mRequestedAspect = aspectRatio;
+			requestLayout();
+		}
+	}
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
 		if (mRequestedAspect > 0) {
 			int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
@@ -101,7 +101,7 @@ public class SimpleUVCCameraTextureView extends TextureView    // API >= 14
 			}
 		}
 
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+	}
 
 }
