@@ -44,6 +44,7 @@ import com.leachchen.testandroiduvctrtc.video.Encoder;
 import com.leachchen.testandroiduvctrtc.video.SurfaceEncoder;
 import com.serenegiant.common.BaseActivity;
 import com.serenegiant.usb.CameraDialog;
+import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.usb.USBMonitor.UsbControlBlock;
@@ -51,6 +52,7 @@ import com.serenegiant.usb.UVCCamera;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
 import java.util.Locale;
@@ -220,6 +222,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         camera.setPreviewDisplay(mPreviewSurface);
                         camera.startPreview();
                     }
+
+                    camera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_RGB565/*UVCCamera.PIXEL_FORMAT_NV21*/);
                     synchronized (mSync) {
                         mUVCCamera = camera;
                     }
@@ -429,5 +433,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         final GregorianCalendar now = new GregorianCalendar();
         return sDateTimeFormat.format(now.getTime());
     }
+
+    private final IFrameCallback mIFrameCallback = new IFrameCallback() {
+        @Override
+        public void onFrame(final ByteBuffer frame) {
+           Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        }
+    };
 
 }
