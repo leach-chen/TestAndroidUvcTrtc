@@ -137,6 +137,17 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         mTRTCCloud = TRTCCloud.sharedInstance(getApplicationContext());
         mTRTCCloud.setListener(new TRTCCloudImplListener(MainActivity.this));
 
+        /*try {
+            Class<?> classBook = Class.forName("com.tencent.liteav.trtc.impl.TRTCCloudImpl");
+            Constructor<?> declaredConstructorBook = classBook.getDeclaredConstructor(Context.class);
+            declaredConstructorBook.setAccessible(true);
+            Object trtcCloudObj = declaredConstructorBook.newInstance(getApplicationContext());
+            mTRTCCloud = (TRTCCloud) trtcCloudObj;
+        }catch (Exception e)
+        {
+
+        }*/
+
         // 初始化配置 SDK 参数
         TRTCCloudDef.TRTCParams trtcParams = new TRTCCloudDef.TRTCParams();
         trtcParams.sdkAppId = GenerateTestUserSig.SDKAPPID;
