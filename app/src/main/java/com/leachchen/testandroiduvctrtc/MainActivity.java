@@ -40,6 +40,8 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.leachchen.testandroiduvctrtc.trtc.ConstantTrtc;
+import com.leachchen.testandroiduvctrtc.trtc.GenerateTestUserSig;
 import com.leachchen.testandroiduvctrtc.video.Encoder;
 import com.leachchen.testandroiduvctrtc.video.SurfaceEncoder;
 import com.serenegiant.common.BaseActivity;
@@ -49,13 +51,23 @@ import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.usb.USBMonitor.UsbControlBlock;
 import com.serenegiant.usb.UVCCamera;
+import com.tencent.liteav.beauty.TXBeautyManager;
+import com.tencent.rtmp.ui.TXCloudVideoView;
+import com.tencent.trtc.TRTCCloud;
+import com.tencent.trtc.TRTCCloudDef;
+import com.tencent.trtc.TRTCCloudListener;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
 import java.util.Locale;
+
+import static com.tencent.trtc.TRTCCloudDef.TRTCRoleAnchor;
+import static com.tencent.trtc.TRTCCloudDef.TRTC_APP_SCENE_VIDEOCALL;
+import static com.tencent.trtc.TRTCCloudDef.TRTC_VIDEO_BUFFER_TYPE_BYTE_ARRAY;
 
 public final class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
     private static final boolean DEBUG = true;	// set false when releasing
@@ -78,6 +90,13 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private int mCaptureState = 0;
     private Surface mPreviewSurface;
 
+
+    private TRTCCloud mTRTCCloud;                 // SDK 核心类
+    private String                          mRoomId = "123";                    // 房间Id
+    private String                          mUserId = "123";                    // 用户Id
+    private TRTCCloudDef.TRTCVideoFrame mFframe;
+    private TXCloudVideoView mLocalPreviewView;          //【控件】本地画面View
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,6 +117,9 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 
 
+
+        mLocalPreviewView   = findViewById(R.id.trtc_tc_cloud_view_main);
+
         /*new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -106,7 +128,54 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 mUSBMonitor.requestPermission((UsbDevice)devices.get(0));
             }
         },1000);*/
+        enterRoom();
     }
+
+
+    private void enterRoom() {
+        Log.d("bbb","bbbbbbbbbbbbbbbbbbbbb:"+mRoomId);
+        mTRTCCloud = TRTCCloud.sharedInstance(getApplicationContext());
+        mTRTCCloud.setListener(new TRTCCloudImplListener(MainActivity.this));
+
+        // 初始化配置 SDK 参数
+        TRTCCloudDef.TRTCParams trtcParams = new TRTCCloudDef.TRTCParams();
+        trtcParams.sdkAppId = GenerateTestUserSig.SDKAPPID;
+        trtcParams.userId = mUserId;
+        trtcParams.roomId = Integer.parseInt(mRoomId);
+        // userSig是进入房间的用户签名，相当于密码（这里生成的是测试签名，正确做法需要业务服务器来生成，然后下发给客户端）
+        trtcParams.userSig = GenerateTestUserSig.genTestUserSig(trtcParams.userId);
+        trtcParams.role = TRTCRoleAnchor;
+
+        // 进入通话
+        mTRTCCloud.enterRoom(trtcParams, TRTC_APP_SCENE_VIDEOCALL);
+        // 开启本地声音采集并上行
+        //mTRTCCloud.startLocalAudio();
+        // 开启本地画面采集并上行
+        //mTRTCCloud.startLocalPreview(true, mLocalPreviewView);
+        mTRTCCloud.enableCustomVideoCapture(true);
+
+
+        mFframe = new TRTCCloudDef.TRTCVideoFrame();
+        mFframe.bufferType = TRTC_VIDEO_BUFFER_TYPE_BYTE_ARRAY;
+
+        /**
+         * 设置默认美颜效果（美颜效果：自然，美颜级别：5, 美白级别：1）
+         * 美颜风格.三种美颜风格：0 ：光滑  1：自然  2：朦胧
+         * 视频通话场景推荐使用“自然”美颜效果
+         */
+        TXBeautyManager beautyManager = mTRTCCloud.getBeautyManager();
+        beautyManager.setBeautyStyle(ConstantTrtc.BEAUTY_STYLE_NATURE);
+        beautyManager.setBeautyLevel(5);
+        beautyManager.setWhitenessLevel(1);
+
+        TRTCCloudDef.TRTCVideoEncParam encParam = new TRTCCloudDef.TRTCVideoEncParam();
+        encParam.videoResolution = TRTCCloudDef.TRTC_VIDEO_RESOLUTION_640_360;
+        encParam.videoFps = ConstantTrtc.VIDEO_FPS;
+        encParam.videoBitrate = ConstantTrtc.RTC_VIDEO_BITRATE;
+        encParam.videoResolutionMode = TRTCCloudDef.TRTC_VIDEO_RESOLUTION_MODE_PORTRAIT;
+        mTRTCCloud.setVideoEncoderParam(encParam);
+    }
+
 
     @Override
     protected void onStart() {
@@ -223,7 +292,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         camera.startPreview();
                     }
 
-                    camera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_RGB565/*UVCCamera.PIXEL_FORMAT_NV21*/);
+                    camera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_YUV420SP);
                     synchronized (mSync) {
                         mUVCCamera = camera;
                     }
@@ -437,8 +506,75 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private final IFrameCallback mIFrameCallback = new IFrameCallback() {
         @Override
         public void onFrame(final ByteBuffer frame) {
-           Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+            byte[] data=new byte[frame.remaining()];
+            frame.get(data);
+            mFframe.width = 640;
+            mFframe.height = 480;
+            mFframe.pixelFormat = TRTCCloudDef.TRTC_VIDEO_PIXEL_FORMAT_I420;
+            mFframe.data = data;
+            Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:"+data.length);
+            mTRTCCloud.sendCustomVideoData(mFframe);
         }
     };
+
+
+    private class TRTCCloudImplListener extends TRTCCloudListener {
+
+        private WeakReference<MainActivity>      mContext;
+
+        public TRTCCloudImplListener(MainActivity activity) {
+            super();
+            mContext = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void onUserVideoAvailable(String userId, boolean available) {
+            /*Log.d(TAG, "onUserVideoAvailable userId " + userId + ", mUserCount " + mUserCount + ",available " + available);
+            int index = mRemoteUidList.indexOf(userId);
+            if (available) {
+                if (index != -1) { //如果mRemoteUidList有，就不重复添加
+                    return;
+                }
+                mRemoteUidList.add(userId);
+                refreshRemoteVideoViews();
+            } else {
+                if (index == -1) { //如果mRemoteUidList没有，说明已关闭画面
+                    return;
+                }
+                /// 关闭用户userId的视频画面
+                mTRTCCloud.stopRemoteView(userId);
+                mRemoteUidList.remove(index);
+                refreshRemoteVideoViews();
+            }*/
+
+        }
+
+        private void refreshRemoteVideoViews() {
+            /*for (int i = 0; i < mRemoteViewList.size(); i++) {
+                if (i < mRemoteUidList.size()) {
+                    String remoteUid = mRemoteUidList.get(i);
+                    mRemoteViewList.get(i).setVisibility(View.VISIBLE);
+                    // 开始显示用户userId的视频画面
+                    mTRTCCloud.startRemoteView(remoteUid, mRemoteViewList.get(i));
+                } else {
+                    mRemoteViewList.get(i).setVisibility(View.GONE);
+                }
+            }*/
+        }
+
+        // 错误通知监听，错误通知意味着 SDK 不能继续运行
+        @Override
+        public void onError(int errCode, String errMsg, Bundle extraInfo) {
+           /* Log.d(TAG, "sdk callback onError");
+            MainActivity activity = mContext.get();
+            if (activity != null) {
+                Toast.makeText(activity, "onError: " + errMsg + "[" + errCode+ "]" , Toast.LENGTH_SHORT).show();
+                if (errCode == TXLiteAVCode.ERR_ROOM_ENTER_FAIL) {
+                    activity.exitRoom();
+                }
+            }*/
+        }
+    }
 
 }
