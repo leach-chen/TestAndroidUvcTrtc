@@ -23,6 +23,7 @@
 
 package com.leachchen.testandroiduvctrtc;
 
+import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
@@ -60,6 +61,7 @@ import com.tencent.trtc.TRTCCloudListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
@@ -97,10 +99,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
     private boolean isFirstCamOpen = false;
 
-    private TRTCCloud mTRTCCloud;                 // SDK 核心类
+    private TRTCCloud mTRTCCloud1;                 // SDK 核心类
+    private TRTCCloud mTRTCCloud2;                 // SDK 核心类
     private String                          mRoomId = "123";                    // 房间Id
     private String                          mUserId = "123";                    // 用户Id
-    private TRTCCloudDef.TRTCVideoFrame mFframe;
+    private TRTCCloudDef.TRTCVideoFrame mFframe1;
+    private TRTCCloudDef.TRTCVideoFrame mFframe2;
     private TXCloudVideoView mLocalPreviewView;          //【控件】本地画面View
 
     @Override
@@ -140,21 +144,20 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 mUSBMonitor1.requestPermission((UsbDevice)devices.get(0));
             }
         },1000);*/
-        enterRoom();
     }
 
 
-    private void enterRoom() {
+    private void enterRoom1() {
         Log.d("bbb","bbbbbbbbbbbbbbbbbbbbb:"+mRoomId);
-        mTRTCCloud = TRTCCloud.sharedInstance(getApplicationContext());
-        mTRTCCloud.setListener(new TRTCCloudImplListener(MainActivity.this));
+        mTRTCCloud1 = TRTCCloud.sharedInstance(getApplicationContext());
+        mTRTCCloud1.setListener(new TRTCCloudImplListener(MainActivity.this));
 
         /*try {
             Class<?> classBook = Class.forName("com.tencent.liteav.trtc.impl.TRTCCloudImpl");
             Constructor<?> declaredConstructorBook = classBook.getDeclaredConstructor(Context.class);
             declaredConstructorBook.setAccessible(true);
             Object trtcCloudObj = declaredConstructorBook.newInstance(getApplicationContext());
-            mTRTCCloud = (TRTCCloud) trtcCloudObj;
+            mTRTCCloud1 = (TRTCCloud) trtcCloudObj;
         }catch (Exception e)
         {
 
@@ -170,23 +173,23 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         trtcParams.role = TRTCRoleAnchor;
 
         // 进入通话
-        mTRTCCloud.enterRoom(trtcParams, TRTC_APP_SCENE_VIDEOCALL);
+        mTRTCCloud1.enterRoom(trtcParams, TRTC_APP_SCENE_VIDEOCALL);
         // 开启本地声音采集并上行
-        //mTRTCCloud.startLocalAudio();
+        //mTRTCCloud1.startLocalAudio();
         // 开启本地画面采集并上行
-        //mTRTCCloud.startLocalPreview(true, mLocalPreviewView);
-        mTRTCCloud.enableCustomVideoCapture(true);
+        //mTRTCCloud1.startLocalPreview(true, mLocalPreviewView);
+        mTRTCCloud1.enableCustomVideoCapture(true);
 
 
-        mFframe = new TRTCCloudDef.TRTCVideoFrame();
-        mFframe.bufferType = TRTC_VIDEO_BUFFER_TYPE_BYTE_ARRAY;
+        mFframe1 = new TRTCCloudDef.TRTCVideoFrame();
+        mFframe1.bufferType = TRTC_VIDEO_BUFFER_TYPE_BYTE_ARRAY;
 
         /**
          * 设置默认美颜效果（美颜效果：自然，美颜级别：5, 美白级别：1）
          * 美颜风格.三种美颜风格：0 ：光滑  1：自然  2：朦胧
          * 视频通话场景推荐使用“自然”美颜效果
          */
-        TXBeautyManager beautyManager = mTRTCCloud.getBeautyManager();
+        TXBeautyManager beautyManager = mTRTCCloud1.getBeautyManager();
         beautyManager.setBeautyStyle(ConstantTrtc.BEAUTY_STYLE_NATURE);
         beautyManager.setBeautyLevel(5);
         beautyManager.setWhitenessLevel(1);
@@ -196,7 +199,62 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         encParam.videoFps = ConstantTrtc.VIDEO_FPS;
         encParam.videoBitrate = ConstantTrtc.RTC_VIDEO_BITRATE;
         encParam.videoResolutionMode = TRTCCloudDef.TRTC_VIDEO_RESOLUTION_MODE_PORTRAIT;
-        mTRTCCloud.setVideoEncoderParam(encParam);
+        mTRTCCloud1.setVideoEncoderParam(encParam);
+    }
+
+    private void enterRoom2() {
+        Log.d("bbb","bbbbbbbbbbbbbbbbbbbbb:"+mRoomId);
+        //mTRTCCloud2 = TRTCCloud.sharedInstance(getApplicationContext());
+        //mTRTCCloud2.setListener(new TRTCCloudImplListener(MainActivity.this));
+
+        try {
+            Class<?> classBook = Class.forName("com.tencent.liteav.trtc.impl.TRTCCloudImpl");
+            Constructor<?> declaredConstructorBook = classBook.getDeclaredConstructor(Context.class);
+            declaredConstructorBook.setAccessible(true);
+            Object trtcCloudObj = declaredConstructorBook.newInstance(getApplicationContext());
+            mTRTCCloud2 = (TRTCCloud) trtcCloudObj;
+        }catch (Exception e)
+        {
+
+        }
+
+        // 初始化配置 SDK 参数
+        TRTCCloudDef.TRTCParams trtcParams = new TRTCCloudDef.TRTCParams();
+        trtcParams.sdkAppId = GenerateTestUserSig.SDKAPPID;
+        trtcParams.userId = "1001";
+        trtcParams.roomId = Integer.parseInt(mRoomId);
+        // userSig是进入房间的用户签名，相当于密码（这里生成的是测试签名，正确做法需要业务服务器来生成，然后下发给客户端）
+        trtcParams.userSig = GenerateTestUserSig.genTestUserSig(trtcParams.userId);
+        trtcParams.role = TRTCRoleAnchor;
+
+        // 进入通话
+        mTRTCCloud2.enterRoom(trtcParams, TRTC_APP_SCENE_VIDEOCALL);
+        // 开启本地声音采集并上行
+        //mTRTCCloud2.startLocalAudio();
+        // 开启本地画面采集并上行
+        //mTRTCCloud2.startLocalPreview(true, mLocalPreviewView);
+        mTRTCCloud2.enableCustomVideoCapture(true);
+
+
+        mFframe2 = new TRTCCloudDef.TRTCVideoFrame();
+        mFframe2.bufferType = TRTC_VIDEO_BUFFER_TYPE_BYTE_ARRAY;
+
+        /**
+         * 设置默认美颜效果（美颜效果：自然，美颜级别：5, 美白级别：1）
+         * 美颜风格.三种美颜风格：0 ：光滑  1：自然  2：朦胧
+         * 视频通话场景推荐使用“自然”美颜效果
+         */
+        TXBeautyManager beautyManager = mTRTCCloud2.getBeautyManager();
+        beautyManager.setBeautyStyle(ConstantTrtc.BEAUTY_STYLE_NATURE);
+        beautyManager.setBeautyLevel(5);
+        beautyManager.setWhitenessLevel(1);
+
+        TRTCCloudDef.TRTCVideoEncParam encParam = new TRTCCloudDef.TRTCVideoEncParam();
+        encParam.videoResolution = TRTCCloudDef.TRTC_VIDEO_RESOLUTION_640_360;
+        encParam.videoFps = ConstantTrtc.VIDEO_FPS;
+        encParam.videoBitrate = ConstantTrtc.RTC_VIDEO_BITRATE;
+        encParam.videoResolutionMode = TRTCCloudDef.TRTC_VIDEO_RESOLUTION_MODE_PORTRAIT;
+        mTRTCCloud2.setVideoEncoderParam(encParam);
     }
 
 
@@ -328,6 +386,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 @Override
                 public void run() {
                     if(!isFirstCamOpen) {
+                        enterRoom1();
                         isFirstCamOpen = true;
                         final UVCCamera camera = new UVCCamera();
                         camera.open(ctrlBlock);
@@ -359,6 +418,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                             mUVCCamera1 = camera;
                         }
                     }else{
+                        enterRoom2();
                         final UVCCamera camera = new UVCCamera();
                         camera.open(ctrlBlock);
                         if (DEBUG) Log.i(TAG, "supportedSize:" + camera.getSupportedSize());
@@ -612,12 +672,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
             byte[] data=new byte[frame.remaining()];
             frame.get(data);
-            mFframe.width = 640;
-            mFframe.height = 480;
-            mFframe.pixelFormat = TRTCCloudDef.TRTC_VIDEO_PIXEL_FORMAT_I420;
-            mFframe.data = data;
+            mFframe1.width = 640;
+            mFframe1.height = 480;
+            mFframe1.pixelFormat = TRTCCloudDef.TRTC_VIDEO_PIXEL_FORMAT_I420;
+            mFframe1.data = data;
             Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:"+data.length);
-            mTRTCCloud.sendCustomVideoData(mFframe);
+            mTRTCCloud1.sendCustomVideoData(mFframe1);
         }
     };
 
@@ -625,14 +685,14 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         @Override
         public void onFrame(final ByteBuffer frame) {
 
-           /* byte[] data=new byte[frame.remaining()];
+            byte[] data = new byte[frame.remaining()];
             frame.get(data);
-            mFframe.width = 640;
-            mFframe.height = 480;
-            mFframe.pixelFormat = TRTCCloudDef.TRTC_VIDEO_PIXEL_FORMAT_I420;
-            mFframe.data = data;
-            Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:"+data.length);
-            mTRTCCloud.sendCustomVideoData(mFframe);*/
+            mFframe2.width = 640;
+            mFframe2.height = 480;
+            mFframe2.pixelFormat = TRTCCloudDef.TRTC_VIDEO_PIXEL_FORMAT_I420;
+            mFframe2.data = data;
+            Log.d("mytest", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111111:" + data.length);
+            mTRTCCloud2.sendCustomVideoData(mFframe2);
         }
     };
 
@@ -660,7 +720,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     return;
                 }
                 /// 关闭用户userId的视频画面
-                mTRTCCloud.stopRemoteView(userId);
+                mTRTCCloud1.stopRemoteView(userId);
                 mRemoteUidList.remove(index);
                 refreshRemoteVideoViews();
             }*/
@@ -673,7 +733,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     String remoteUid = mRemoteUidList.get(i);
                     mRemoteViewList.get(i).setVisibility(View.VISIBLE);
                     // 开始显示用户userId的视频画面
-                    mTRTCCloud.startRemoteView(remoteUid, mRemoteViewList.get(i));
+                    mTRTCCloud1.startRemoteView(remoteUid, mRemoteViewList.get(i));
                 } else {
                     mRemoteViewList.get(i).setVisibility(View.GONE);
                 }
