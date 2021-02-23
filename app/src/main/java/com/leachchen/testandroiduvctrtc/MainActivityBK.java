@@ -32,9 +32,6 @@ import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Surface;
@@ -78,7 +75,7 @@ import static com.tencent.trtc.TRTCCloudDef.TRTCRoleAnchor;
 import static com.tencent.trtc.TRTCCloudDef.TRTC_APP_SCENE_VIDEOCALL;
 import static com.tencent.trtc.TRTCCloudDef.TRTC_VIDEO_BUFFER_TYPE_BYTE_ARRAY;
 
-public final class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
+public final class MainActivityBK extends BaseActivity implements CameraDialog.CameraDialogParent {
     private static final boolean DEBUG = true;	// set false when releasing
     private static final String TAG = "MainActivity";
 
@@ -116,7 +113,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 
     private Camera1Service mCamera1Service;
-    private Messenger  mCamera2Service;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -158,14 +154,11 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         //startService(new Intent(getBaseContext(), Camera1Service.class));
 
         //绑定Service
-        Intent intent1 = new Intent(this,Camera1Service.class);
-        bindService(intent1, connService1, Context.BIND_AUTO_CREATE);
-
-        Intent intent2 = new Intent(this,Camera2Service.class);
-        bindService(intent2, connService2, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent(this,Camera1Service.class);
+        bindService(intent, conn, Context.BIND_AUTO_CREATE);
     }
 
-    ServiceConnection connService1 = new ServiceConnection() {
+    ServiceConnection conn = new ServiceConnection() {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
@@ -179,47 +172,11 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         }
     };
 
-    private ServiceConnection connService2 = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            // Activity已经绑定了Service
-            // 通过参数service来创建Messenger对象，这个对象可以向Service发送Message，与Service进行通信
-            mCamera2Service = new Messenger(service);
-
-            /*Message message = Message.obtain(null, Camera2Service.MSG_SAY_HELLO);
-            Bundle data = new Bundle();
-            data.putString("msg", "I am from the client.");
-            message.setData(data);
-            try{
-                mCamera2Service.send(message);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-            Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");*/
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-        }
-    };
-
-    /*ServiceConnection connService2 = new ServiceConnection() {
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            //返回一个MsgService对象
-            mCamera2Service = ((Camera2Service.MsgBinder) service).getService();
-        }
-    };*/
-
 
         private void enterRoom1() {
         Log.d("bbb","bbbbbbbbbbbbbbbbbbbbb:"+mRoomId);
         mTRTCCloud1 = TRTCCloud.sharedInstance(getApplicationContext());
-        mTRTCCloud1.setListener(new TRTCCloudImplListener(MainActivity.this));
+        mTRTCCloud1.setListener(new TRTCCloudImplListener(MainActivityBK.this));
 
         /*try {
             Class<?> classBook = Class.forName("com.tencent.liteav.trtc.impl.TRTCCloudImpl");
@@ -412,7 +369,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     mUVCCamera2.destroy();
                     mUVCCamera2 = null;
                 }*/
-                CameraDialog.showDialog(MainActivity.this);
+                CameraDialog.showDialog(MainActivityBK.this);
             }
             updateItems();
         }
@@ -434,7 +391,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private final OnDeviceConnectListener mOnDeviceConnectListener = new OnDeviceConnectListener() {
         @Override
         public void onAttach(final UsbDevice device) {
-            Toast.makeText(MainActivity.this, "USB_DEVICE_ATTACHED", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivityBK.this, "USB_DEVICE_ATTACHED", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -455,7 +412,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 @Override
                 public void run() {
                     if(!isFirstCamOpen) {
-                        //enterRoom1();
+                        enterRoom1();
                         isFirstCamOpen = true;
                         final UVCCamera camera = new UVCCamera();
                         camera.open(ctrlBlock);
@@ -487,7 +444,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                             mUVCCamera1 = camera;
                         }
                     }else{
-                        //enterRoom2();
+                        enterRoom2();
                         final UVCCamera camera = new UVCCamera();
                         camera.open(ctrlBlock);
                         if (DEBUG) Log.i(TAG, "supportedSize:" + camera.getSupportedSize());
@@ -554,7 +511,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
         @Override
         public void onDettach(final UsbDevice device) {
-            Toast.makeText(MainActivity.this, "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivityBK.this, "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -746,6 +703,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             mFframe1.data = data;
             Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:"+data.length);
             mTRTCCloud1.sendCustomVideoData(mFframe1);*/
+            //Log.d("mytest","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:");
             mCamera1Service.updateData(frame);
         }
     };
@@ -754,37 +712,22 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         @Override
         public void onFrame(final ByteBuffer frame) {
 
-            /*byte[] data = new byte[frame.remaining()];
+            byte[] data = new byte[frame.remaining()];
             frame.get(data);
             mFframe2.width = 640;
             mFframe2.height = 480;
             mFframe2.pixelFormat = TRTCCloudDef.TRTC_VIDEO_PIXEL_FORMAT_I420;
             mFframe2.data = data;
             Log.d("mytest", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111111:" + data.length);
-            mTRTCCloud2.sendCustomVideoData(mFframe2);*/
-            //mCamera2Service.updateData(frame);
-
-            Message msg = Message.obtain(null, Camera2Service.MSG_SAY_HELLO);
-            try {
-                Bundle data = new Bundle();
-                data.putString("msg", "I am from the client.");
-                byte[] dataArray=new byte[frame.remaining()];
-                frame.get(dataArray);
-                data.putByteArray("key1",dataArray);
-                msg.setData(data);
-                mCamera2Service.send(msg);
-                Log.d("mytest","ccccccccccccccccccccccccc:"+dataArray.length);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
+            mTRTCCloud2.sendCustomVideoData(mFframe2);
         }
     };
 
     private class TRTCCloudImplListener extends TRTCCloudListener {
 
-        private WeakReference<MainActivity>      mContext;
+        private WeakReference<MainActivityBK>      mContext;
 
-        public TRTCCloudImplListener(MainActivity activity) {
+        public TRTCCloudImplListener(MainActivityBK activity) {
             super();
             mContext = new WeakReference<>(activity);
         }
