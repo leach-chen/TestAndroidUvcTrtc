@@ -159,9 +159,15 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
         //绑定Service
         Intent intent1 = new Intent(this,Camera1Service.class);
+        intent1.putExtra("RoomId","123");
+        intent1.putExtra("UserName","111");
+        intent1.putExtra("AppId",GenerateTestUserSig.SDKAPPID);
         bindService(intent1, connService1, Context.BIND_AUTO_CREATE);
 
         Intent intent2 = new Intent(this,Camera2Service.class);
+        intent2.putExtra("RoomId","123");
+        intent2.putExtra("UserName","222");
+        intent2.putExtra("AppId",GenerateTestUserSig.SDKAPPID);
         bindService(intent2, connService2, Context.BIND_AUTO_CREATE);
     }
 

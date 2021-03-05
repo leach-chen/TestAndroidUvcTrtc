@@ -36,8 +36,10 @@ public class Camera1Service extends Service {
     boolean mAllowRebind;
 
     private TRTCCloud mTRTCCloud1;                 // SDK 核心类
-    private String mRoomId = "123";                    // 房间Id
-    private String mUserId = "123";                    // 用户Id
+    private String mRoomId;                    // 房间Id
+    private String mUserName;                    // 用户Id
+    private int mAppId; //appid
+    private int mAppKey; //appkey
     private TRTCCloudDef.TRTCVideoFrame mFframe1;
 
     /**
@@ -45,12 +47,10 @@ public class Camera1Service extends Service {
      */
     @Override
     public void onCreate() {
-        //Log.d("mytest", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111111111111111111");
-        enterRoom1();
+        //enterRoom1();
     }
 
     private void enterRoom1() {
-        Log.d("bbb", "bbbbbbbbbbbbbbbbbbbbb11:" + mRoomId+"--"+mUserId);
         mTRTCCloud1 = TRTCCloud.sharedInstance(getApplicationContext());
         /*try {
             Class<?> classBook = Class.forName("com.tencent.liteav.trtc.impl.TRTCCloudImpl");
@@ -65,8 +65,8 @@ public class Camera1Service extends Service {
 
         // 初始化配置 SDK 参数
         TRTCCloudDef.TRTCParams trtcParams = new TRTCCloudDef.TRTCParams();
-        trtcParams.sdkAppId = GenerateTestUserSig.SDKAPPID;
-        trtcParams.userId = mUserId;
+        trtcParams.sdkAppId = mAppId;
+        trtcParams.userId = mUserName;
         trtcParams.roomId = Integer.parseInt(mRoomId);
         // userSig是进入房间的用户签名，相当于密码（这里生成的是测试签名，正确做法需要业务服务器来生成，然后下发给客户端）
         trtcParams.userSig = GenerateTestUserSig.genTestUserSig(trtcParams.userId);
@@ -115,6 +115,10 @@ public class Camera1Service extends Service {
      */
     @Override
     public IBinder onBind(Intent intent) {
+        mRoomId = intent.getExtras().getString("RoomId");
+        mUserName = intent.getExtras().getString("UserName");
+        mAppId = intent.getExtras().getInt("AppId");
+        enterRoom1();
         return new MsgBinder();
     }
 

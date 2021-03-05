@@ -16,7 +16,7 @@ buildscript {
 
 allprojects {
     repositories {
-        maven { url 'https://gitee.com/liuchaoya/libcommon/raw/master/repository/' }
+        //maven { url 'https://gitee.com/liuchaoya/libcommon/raw/master/repository/' }
         google()
         jcenter()
         
